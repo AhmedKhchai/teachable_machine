@@ -15,8 +15,34 @@ class_names = open("labels.txt", "r").readlines()
 camera = cv2.VideoCapture(0)
 operator = ""
 elements = []
+frame_count = 0
+increment_frames = False
+max_frames = 50  # Number of frames to capture before making a decisio
+prediction_dict = {}
+
+def calculate(elements, operator):
+    if operator == "+":
+        return int(elements[0]) + int(elements[1])
+    elif operator == "-":
+        return int(elements[0]) - int(elements[1])
+    elif operator == "*":
+        return int(elements[0]) * int(elements[1])
+    elif operator == "/":
+        try:
+            return int(elements[0]) / int(elements[1])
+        except ZeroDivisionError:
+            print("Error: Division by zero.")
+            return None
+    else:
+        return None
+
 
 while True:
+    if len(elements) == 2 and operator:
+        result = calculate(elements, operator)
+        print(f"Result: {result}")
+        break
+    
     # Grab the webcamera's image.
     ret, image = camera.read()
 
@@ -35,12 +61,50 @@ while True:
     # Predicts the model
     prediction = model.predict(image)
     index = np.argmax(prediction)
-    class_name = class_names[index]
+    class_name = class_names[index].split()[1]
     confidence_score = prediction[0][index]
 
-    # Print prediction and confidence score
-    print("Class:", class_name[2:], end="")
-    print("Confidence Score:", str(np.round(confidence_score * 100))[:-2], "%")
+    print("Class:", class_name)
+    # print("Confidence Score:", str(np.round(confidence_score * 100))[:-2], "%")
+
+    # Listen to the keyboard for presses.
+    keyboard_input = cv2.waitKey(1)
+
+    # Start incrementing frames when 's' is pressed
+    if keyboard_input == ord("s"):
+        increment_frames = True
+
+    # Stop incrementing frames when 'e' is pressed
+    if keyboard_input == ord("e"):
+        increment_frames = False
+
+    # print("increment_frames", increment_frames)
+    if increment_frames:
+        # If the class name is one of these ['+', '-', '*', '/'] add it to the operator variable
+        if class_name in ["+", "-", "*", "/"]:
+            operator = class_name
+            print("operator", operator)
+        # Throught out a period of time we want to collect the class names that are not operators and take the one that is most common and with the highest confidence score
+        # Store the prediction and its confidence score
+        if class_name not in ["+", "-", "*", "/", "fond"]:
+            if class_name in prediction_dict:
+                # Update the class name's score only if the new score is higher
+                if confidence_score > prediction_dict[class_name]:
+                    prediction_dict[class_name] = confidence_score
+            else:
+                prediction_dict[class_name] = confidence_score
+
+        frame_count += 1
+        if frame_count == max_frames:
+            # Find the class name with the highest score
+            most_confident_class = max(prediction_dict, key=prediction_dict.get)
+            # Reset prediction_dict and frame_count for the next batch of frames
+            prediction_dict = {}
+            frame_count = 0
+            print("most_confident_class", most_confident_class)
+            print("")
+            # Add the most_confident_class to your elements list
+            elements.append(most_confident_class)
 
     # Listen to the keyboard for presses.
     keyboard_input = cv2.waitKey(1)
