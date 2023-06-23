@@ -42,7 +42,7 @@ while True:
         result = calculate(elements, operator)
         print(f"Result: {result}")
         break
-    
+
     # Grab the webcamera's image.
     ret, image = camera.read()
 
@@ -78,12 +78,12 @@ while True:
     if keyboard_input == ord("e"):
         increment_frames = False
 
-    # print("increment_frames", increment_frames)
+        # print("increment_frames", increment_frames)
+    if class_name in ["+", "-", "*", "/"]:
+        operator = class_name
+        print("operator", operator)
     if increment_frames:
         # If the class name is one of these ['+', '-', '*', '/'] add it to the operator variable
-        if class_name in ["+", "-", "*", "/"]:
-            operator = class_name
-            print("operator", operator)
         # Throught out a period of time we want to collect the class names that are not operators and take the one that is most common and with the highest confidence score
         # Store the prediction and its confidence score
         if class_name not in ["+", "-", "*", "/", "fond"]:
@@ -102,9 +102,19 @@ while True:
             prediction_dict = {}
             frame_count = 0
             print("most_confident_class", most_confident_class)
-            print("")
-            # Add the most_confident_class to your elements list
-            elements.append(most_confident_class)
+
+            user_input = input("Confirm class (y/n), Retry (r), or Continue (c)?: ")
+            if user_input.lower() == "y":
+                # Add the most_confident_class to your elements list
+                elements.append(most_confident_class)
+            elif user_input.lower() == "r":
+                # Retry logic here, you might want to reset certain variables or make a different              decision
+                pass
+            elif user_input.lower() == "c":
+                # Continue to next class
+                continue
+            else:
+                print("Invalid input! Continuing to next class...")
 
     # Listen to the keyboard for presses.
     keyboard_input = cv2.waitKey(1)
